@@ -69,10 +69,9 @@ useEffect(() => {
       <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">VuMark Generator</h1>
 
       <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-xl font-semibold mb-4">Enter Instance ID</h2>
         <input
           type="text"
-          placeholder="Enter Image ID"
+          placeholder="Enter Instance ID"
           value={id}
           onChange={(e) => setId(e.target.value)}
           className="border border-gray-300 rounded p-2 w-full mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
