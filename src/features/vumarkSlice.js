@@ -1,14 +1,14 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "http://192.168.68.108:5173/api/v1/vumark/generate";
 
 export const generateVuMark = createAsyncThunk(
   "vumark/generate",
-  async (id, { rejectWithValue }) => {
+  async (data, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_URL}/image/${id}`);
-      return response.data.base64;  
+      const response = await axios.post(API_URL, data);
+      return response.data;
     } catch (error) {
       let message = "An unexpected error occurred.";
 
@@ -35,7 +35,7 @@ const vumarkSlice = createSlice({
   reducers: {
     clearImage: (state) => {
       state.imageUrl = "";
-      state.error = null; 
+      state.error = null;
     },
     clearError: (state) => {
       state.error = null;
