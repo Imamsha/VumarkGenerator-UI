@@ -1,44 +1,31 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = "http://192.168.68.108:5173/api/v1/vumark/generate";
-
 export const generateVuMark = createAsyncThunk(
   "vumark/generate",
-  async (data, { rejectWithValue }) => {
-    try {
-      const response = await axios.post(API_URL, data);
-      return response.data;
-    } catch (error) {
-      let message = "An unexpected error occurred.";
-
-      if (error.response) {
-        message = error.response.data?.message || "Server error occurred.";
-      } else if (error.request) {
-        message = "No response from the server. Please check your connection.";
-      } else {
-        message = error.message;
-      }
-
-      return rejectWithValue(message);
-    }
+  async (data) => {
+    const response = await axios.post(
+      "http://13.57.107.17:8013/api/v1/vumark/generate",
+      data
+    );
+    return response.data;
   }
 );
 
 const vumarkSlice = createSlice({
   name: "vumark",
   initialState: {
-    imageUrl: "",
+    vumarkId: null,
+    metadata: null,
     loading: false,
     error: null,
+    data: null,
   },
   reducers: {
-    clearImage: (state) => {
-      state.imageUrl = "";
-      state.error = null;
-    },
-    clearError: (state) => {
-      state.error = null;
+    resetVuMark: (state) => {
+      state.data = null;
+      state.vumarkId = null;
+      state.metadata = null;
     },
   },
   extraReducers: (builder) => {
@@ -49,14 +36,16 @@ const vumarkSlice = createSlice({
       })
       .addCase(generateVuMark.fulfilled, (state, action) => {
         state.loading = false;
-        state.imageUrl = action.payload;
+        state.vumarkId = action.payload.vumarkId;
+        state.metadata = action.payload.metadata;
+        state.data = action.payload;
       })
       .addCase(generateVuMark.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.error.message;
       });
   },
 });
 
-export const { clearImage, clearError } = vumarkSlice.actions;
+export const { resetVuMark } = vumarkSlice.actions;
 export default vumarkSlice.reducer;

@@ -1,114 +1,142 @@
-import { useEffect, useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { generateVuMark, clearError, clearImage } from "../../features/vumarkSlice";
-import { jsPDF } from "jspdf";
+import { generateVuMark, resetVuMark } from "../../features/vumarkSlice";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const VuMarkForm = () => {
   const dispatch = useDispatch();
-  const { imageUrl, loading, error } = useSelector((state) => state.vumark);
+  const vumarkData = useSelector((state) => state.vumark.data);
+  const { loading, error } = useSelector((state) => state.vumark);
 
+  const [imageUrl, setImageUrl] = useState("");
+  const svgRef = useRef();
   const [id, setId] = useState("");
-  const [downloadFormat, setDownloadFormat] = useState("png");
+  const [format, setFormat] = useState("svg");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleGenerateVuMark = () => {
-    if (!id) {
-      alert("Please enter an instance ID.");
-      return;
-    }
-    dispatch(generateVuMark(id));
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    dispatch(generateVuMark({ id }));
   };
 
+  console.log(imageUrl);
+  useEffect(() => {
+    if (vumarkData) {
+      const svgBlob = new Blob([vumarkData], { type: "image/svg+xml" });
+      const url = URL.createObjectURL(svgBlob);
+      setImageUrl(url);
 
-useEffect(() => {
-  if (error) {
-    const timer = setTimeout(() => {
-      dispatch(clearError());
-      dispatch(clearImage()); 
-    }, 2000);
-    return () => clearTimeout(timer);
-  }
-}, [error, dispatch]);
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [vumarkData]);
 
-  const handleDownload = () => {
-    if (!imageUrl) {
-      alert("No VuMark available for download.");
+  useEffect(() => {
+    if (error) {
+      setErrorMessage(error);
+      const timer = setTimeout(() => {
+        setErrorMessage("");
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  const handleDownload = async () => {
+    if (!vumarkData) {
+      alert("No image available to download!");
       return;
     }
 
-    if (downloadFormat === "png" || downloadFormat === "svg") {
-      const a = document.createElement("a");
-      a.href = imageUrl;
-      a.download = `vumark-${id}.${downloadFormat}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    } else if (downloadFormat === "pdf") {
-      const img = new Image();
-      img.src = imageUrl;
-      img.crossOrigin = "anonymous"; 
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-        const imgData = canvas.toDataURL("image/png");
-        const pdf = new jsPDF();
-        pdf.addImage(imgData, "PNG", 10, 10, 180, 160);
-        pdf.save(`vumark-${id}.pdf`);
-      };
+    if (format === "svg") {
+      const blob = new Blob([vumarkData], { type: "image/svg+xml" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `vumark_${id}.svg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      const element = svgRef.current;
+      if (!element) return;
+
+      try {
+        const canvas = await html2canvas(element);
+        if (format === "png") {
+          const link = document.createElement("a");
+          link.href = canvas.toDataURL("image/png");
+          link.download = `vumark_${id}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else if (format === "pdf") {
+          const pdf = new jsPDF();
+          pdf.addImage(canvas.toDataURL("image/png"), "PNG", 10, 10, 180, 160);
+          pdf.save(`vumark_${id}.pdf`);
+        }
+      } catch (err) {
+        console.error("Error generating image:", err);
+        alert("Failed to generate the image. Please try again.");
+      }
     }
-    setTimeout(() => {
-      setId("");
-      dispatch(clearImage());
-    }, 500);
+
+    // ✅ Clear input and Redux state after download
+    setId("");
+    setImageUrl("");
+    dispatch(resetVuMark()); // Clears VuMark data from Redux
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-6">
-      <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">VuMark Generator</h1>
-
-      <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
-        <input
-          type="text"
-          placeholder="Enter Instance ID"
-          value={id}
-          onChange={(e) => setId(e.target.value)}
-          className="border border-gray-300 rounded p-2 w-full mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+    <div className="max-w-md mx-auto bg-white p-6 rounded-md shadow-lg">
+      <h1 className="text-3xl text-blue-900 font-semibold text-center mb-4">
+        Generate VuMark
+      </h1>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-4">
+          <label className="block text-gray-700">Instance ID</label>
+          <input
+            type="text"
+            value={id}
+            onChange={(e) => setId(e.target.value)}
+            className="w-full px-4 py-2 mt-2 border rounded-md"
+            required
+          />
+        </div>
         <button
-          onClick={handleGenerateVuMark}
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 w-full transition-all"
+          type="submit"
+          className="w-full px-4 py-2 bg-blue-500 text-white font-semibold rounded-md"
+          disabled={loading}
         >
           {loading ? "Generating..." : "Generate VuMark"}
         </button>
-        {error ? (
-          <div className="mt-3 bg-red-100 text-red-600 p-3 rounded shadow">
-            ❌ {error}
-          </div>
-        ) : imageUrl ? (
+      </form>
+
+      {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
+
+      {vumarkData && (
+        <div className="mt-4">
+          <div ref={svgRef} dangerouslySetInnerHTML={{ __html: vumarkData }} />
+
           <div className="mt-4">
-            <img src={imageUrl} alt="Generated VuMark" className="w-full max-h-64 object-contain mb-3" />
-            <label className="block mt-3 font-semibold">Select Download Format:</label>
+            <label className="block text-gray-700">Select Format</label>
             <select
-              value={downloadFormat}
-              onChange={(e) => setDownloadFormat(e.target.value)}
-              className="border rounded p-2 w-full mt-1"
+              value={format}
+              onChange={(e) => setFormat(e.target.value)}
+              className="w-full px-4 py-2 mt-2 border rounded-md"
             >
-              <option value="png">PNG</option>
               <option value="svg">SVG</option>
+              <option value="png">PNG</option>
               <option value="pdf">PDF</option>
             </select>
-
-            <button
-              onClick={handleDownload}
-              className="bg-blue-500 text-white px-4 py-2 mt-4 rounded hover:bg-blue-600 w-full transition-all"
-            >
-              Download Image
-            </button>
           </div>
-        ) : null}
-      </div>
+
+          <button
+            onClick={handleDownload}
+            className="w-full px-4 py-2 mt-4 bg-green-500 text-white font-semibold rounded-md"
+          >
+            Download {format.toUpperCase()}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
