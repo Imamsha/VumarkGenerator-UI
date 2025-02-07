@@ -1,8 +1,11 @@
 import React from 'react'
+import VuMarkForm from './components/form/VuMarkForm'
 
-function App() {
+const App = () => {
   return (
-    <div className='text-center underline text-red-500 font-bold text-2xl'>Hello</div>
+    <>
+    <VuMarkForm/>
+    </>
   )
 }
 
