@@ -9,7 +9,7 @@ const Header = () => {
   };
 
   return (
-    <header className="w-full bg-blue-900 text-white p-4 shadow-md  fixed top-0">
+    <header className="w-full bg-blue-900 text-white p-4 shadow-md  fixed top-0  z-50">
       <div className="flex items-center justify-between px-8 max-w-7xl mx-auto">
         {/* Title */}
         <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold font-roboto">
