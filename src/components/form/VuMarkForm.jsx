@@ -97,7 +97,7 @@ const VuMarkForm = () => {
   ];
 
   return (
-    <div className="flex items-center justify-center w-full py-12">
+    <div className="flex items-center justify-center w-full h-full py-36 px-2">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -109,7 +109,7 @@ const VuMarkForm = () => {
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="absolute top-4 right-4 bg-green-100 text-green-800 px-4 py-2 rounded-md shadow-md"
+            className="absolute top-4 right-4 bg-green-300 text-green-800 px-4 py-2 rounded-md shadow-md"
           >
             Success!
           </motion.div>
