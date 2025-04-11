@@ -5,8 +5,7 @@ export const generateVuMark = createAsyncThunk(
   "vumark/generate",
   async (data) => {
     const response = await axios.post(
-      "http://4.240.114.116:8013/api/v1/vumark/generate", 
-      // "http://192.168.68.103:8013/api/v1/vumark/generate",
+      "https://api-vumark.visualsmartdc.com/api/v1/vumark/generate",
       data
     );
     return response.data;
